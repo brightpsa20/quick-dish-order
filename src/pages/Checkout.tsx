@@ -1,15 +1,20 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 import CartSummary from '../components/cart/CartSummary';
 import { useCart } from '../context/CartContext';
 import { sendOrderToWhatsApp, CheckoutFormData } from '../utils/whatsapp';
+import { useOpeningHours } from '../hooks/useOpeningHours';
+import { useToast } from '../hooks/use-toast';
+import { AlertTriangle } from 'lucide-react';
 
 const Checkout = () => {
   const navigate = useNavigate();
   const { items, subtotal, clearCart } = useCart();
+  const { isOpen, currentStatus } = useOpeningHours();
+  const { toast } = useToast();
   
   const [formData, setFormData] = useState<CheckoutFormData>({
     name: '',
@@ -22,6 +27,20 @@ const Checkout = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [pixKey, setPixKey] = useState<string>('11998765432'); // This would come from your restaurant settings
   const [whatsappNumber, setWhatsappNumber] = useState<string>('5511998765432'); // This would come from your restaurant settings
+  
+  // Verificar se o restaurante está aberto ao entrar na página
+  useEffect(() => {
+    if (!isOpen) {
+      toast({
+        variant: "destructive",
+        title: "Restaurante fechado",
+        description: "Não é possível realizar pedidos fora do horário de funcionamento.",
+        action: (
+          <AlertTriangle className="h-4 w-4" />
+        )
+      });
+    }
+  }, [isOpen, toast]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -70,6 +89,16 @@ const Checkout = () => {
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Verificar se o restaurante está aberto
+    if (!isOpen) {
+      toast({
+        variant: "destructive",
+        title: "Pedido não permitido",
+        description: "O restaurante está fechado no momento. Volte durante nosso horário de funcionamento.",
+      });
+      return;
+    }
     
     if (!validateForm()) {
       return;
@@ -147,6 +176,16 @@ const Checkout = () => {
       <main className="flex-grow container mx-auto px-4 py-8">
         <h1 className="text-3xl font-display font-bold mb-6">Finalizar Pedido</h1>
         
+        {!isOpen && (
+          <div className="bg-destructive/10 border border-destructive text-destructive p-4 rounded-md mb-6">
+            <div className="flex items-center">
+              <AlertTriangle className="h-5 w-5 mr-2" />
+              <p className="font-medium">O restaurante está fechado no momento.</p>
+            </div>
+            <p className="mt-1 text-sm">Não é possível realizar pedidos fora do horário de funcionamento.</p>
+          </div>
+        )}
+        
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Checkout Form */}
           <div className="lg:col-span-2">
@@ -168,6 +207,7 @@ const Checkout = () => {
                       onChange={handleInputChange}
                       className={`w-full p-3 border rounded-md ${errors.name ? 'border-destructive' : 'border-input'}`}
                       placeholder="Seu nome completo"
+                      disabled={!isOpen}
                     />
                     {errors.name && <p className="text-destructive text-sm mt-1">{errors.name}</p>}
                   </div>
@@ -187,6 +227,7 @@ const Checkout = () => {
                         checked={formData.deliveryOption === 'pickup'}
                         onChange={handleRadioChange}
                         className="mr-2"
+                        disabled={!isOpen}
                       />
                       <label htmlFor="pickup">Retirar no Local</label>
                     </div>
@@ -200,6 +241,7 @@ const Checkout = () => {
                         checked={formData.deliveryOption === 'delivery'}
                         onChange={handleRadioChange}
                         className="mr-2"
+                        disabled={!isOpen}
                       />
                       <label htmlFor="delivery">Entrega</label>
                     </div>
@@ -217,6 +259,7 @@ const Checkout = () => {
                           rows={3}
                           className={`w-full p-3 border rounded-md ${errors.address ? 'border-destructive' : 'border-input'}`}
                           placeholder="Rua, número, complemento, bairro, cidade"
+                          disabled={!isOpen}
                         />
                         {errors.address && (
                           <p className="text-destructive text-sm mt-1">{errors.address}</p>
@@ -240,6 +283,7 @@ const Checkout = () => {
                         checked={formData.paymentMethod === 'pix'}
                         onChange={handleRadioChange}
                         className="mr-2"
+                        disabled={!isOpen}
                       />
                       <label htmlFor="pix">PIX</label>
                     </div>
@@ -253,11 +297,16 @@ const Checkout = () => {
                             value={pixKey}
                             readOnly
                             className="flex-grow p-2 border rounded-l-md bg-white"
+                            disabled={!isOpen}
                           />
                           <button
                             type="button"
-                            onClick={copyPixKey}
-                            className="bg-primary text-white px-4 py-2 rounded-r-md"
+                            onClick={() => {
+                              navigator.clipboard.writeText(pixKey);
+                              toast({ description: "Chave PIX copiada!" });
+                            }}
+                            className="bg-primary text-white px-4 py-2 rounded-r-md disabled:opacity-50"
+                            disabled={!isOpen}
                           >
                             Copiar
                           </button>
@@ -277,6 +326,7 @@ const Checkout = () => {
                         checked={formData.paymentMethod === 'cash'}
                         onChange={handleRadioChange}
                         className="mr-2"
+                        disabled={!isOpen}
                       />
                       <label htmlFor="cash">Dinheiro</label>
                     </div>
@@ -291,6 +341,7 @@ const Checkout = () => {
                             checked={formData.changeNeeded}
                             onChange={handleCheckboxChange}
                             className="mr-2"
+                            disabled={!isOpen}
                           />
                           <label htmlFor="changeNeeded">Preciso de troco</label>
                         </div>
@@ -311,6 +362,7 @@ const Checkout = () => {
                                 onChange={handleChangeAmountInput}
                                 className={`w-full p-3 pl-10 border rounded-md ${errors.changeAmount ? 'border-destructive' : 'border-input'}`}
                                 placeholder="0,00"
+                                disabled={!isOpen}
                               />
                             </div>
                             {errors.changeAmount && (
@@ -325,9 +377,10 @@ const Checkout = () => {
                 
                 <button
                   type="submit"
-                  className="w-full bg-primary text-white py-3 px-4 rounded-lg font-medium hover:bg-primary/90 transition-colors"
+                  className="w-full bg-primary text-white py-3 px-4 rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!isOpen}
                 >
-                  Finalizar e Enviar Pedido
+                  {isOpen ? 'Finalizar e Enviar Pedido' : 'Restaurante Fechado'}
                 </button>
               </form>
             </div>

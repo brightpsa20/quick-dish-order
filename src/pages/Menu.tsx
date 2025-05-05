@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
+import HeroSection from '../components/menu/HeroSection';
 import ProductList from '../components/menu/ProductList';
 import { Product } from '../context/CartContext';
 import { supabase } from '../hooks/useAuth';
@@ -96,15 +97,6 @@ const Menu = () => {
           setProducts(dummyProducts);
           setLoading(false);
         }, 500);
-        
-        // In a real app with Supabase, you would do:
-        // const { data, error } = await supabase
-        //   .from('products')
-        //   .select('*')
-        //   .order('category');
-        // if (error) throw error;
-        // setProducts(data);
-        
       } catch (err) {
         console.error('Error fetching products:', err);
         setError('Erro ao carregar produtos. Por favor, tente novamente.');
@@ -120,7 +112,7 @@ const Menu = () => {
       <Header />
       
       <main className="flex-grow container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-display font-bold mb-6">Nosso Cardápio</h1>
+        <HeroSection />
         
         {loading ? (
           <div className="flex justify-center items-center py-20">
