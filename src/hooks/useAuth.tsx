@@ -2,10 +2,10 @@
 import React, { useState, useEffect, useContext, createContext } from 'react';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// Initialize Supabase client
-// Note: In a production app, you would use environment variables
-const supabaseUrl = "YOUR_SUPABASE_URL"; // Will be replaced by user's Supabase URL
-const supabaseAnonKey = "YOUR_SUPABASE_ANON_KEY"; // Will be replaced by user's Supabase key
+// Initialize Supabase client with environment variables or default placeholders
+// that won't cause URL construction errors
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://placeholder-url.supabase.co";
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "placeholder-key";
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
