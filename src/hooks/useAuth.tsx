@@ -36,7 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .single();
             
           if (userData) {
-            setUser(userData);
+            setUser(userData as User);
             setIsAdmin(userData.role === 'admin');
           }
         } else {
@@ -62,7 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .single();
           
         if (userData) {
-          setUser(userData);
+          setUser(userData as User);
           setIsAdmin(userData.role === 'admin');
         }
       }
