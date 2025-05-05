@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -25,12 +28,15 @@ const Login = () => {
       if (error) {
         console.error('Login error:', error);
         setError('Email ou senha inválidos. Tente novamente.');
+        toast.error('Falha no login. Verifique suas credenciais.');
       } else {
+        toast.success('Login realizado com sucesso!');
         navigate('/admin/dashboard');
       }
     } catch (err) {
       console.error('Unexpected error during login:', err);
       setError('Ocorreu um erro inesperado. Tente novamente mais tarde.');
+      toast.error('Erro inesperado. Tente novamente mais tarde.');
     } finally {
       setLoading(false);
     }
@@ -55,29 +61,29 @@ const Login = () => {
               )}
               
               <div className="mb-4">
-                <label htmlFor="email" className="block text-sm font-medium mb-1">
+                <Label htmlFor="email" className="block text-sm font-medium mb-1">
                   Email
-                </label>
-                <input
+                </Label>
+                <Input
                   type="email"
                   id="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full p-3 border border-input rounded-md"
+                  className="w-full p-3"
                   required
                 />
               </div>
               
               <div className="mb-6">
-                <label htmlFor="password" className="block text-sm font-medium mb-1">
+                <Label htmlFor="password" className="block text-sm font-medium mb-1">
                   Senha
-                </label>
-                <input
+                </Label>
+                <Input
                   type="password"
                   id="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full p-3 border border-input rounded-md"
+                  className="w-full p-3"
                   required
                 />
               </div>

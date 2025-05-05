@@ -1,13 +1,6 @@
 
 import React, { useState, useEffect, useContext, createContext } from 'react';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
-
-// Initialize Supabase client with environment variables or default placeholders
-// that won't cause URL construction errors
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://placeholder-url.supabase.co";
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "placeholder-key";
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import { supabase } from '../integrations/supabase/client';
 
 interface User {
   id: string;
@@ -31,32 +24,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    // Check for active session on component mount
-    const checkSession = async () => {
-      setLoading(true);
-      
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (session) {
-        // Get user details from database
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('id, email, role')
-          .eq('id', session.user.id)
-          .single();
-          
-        if (userData) {
-          setUser(userData);
-          setIsAdmin(userData.role === 'admin');
-        }
-      }
-      
-      setLoading(false);
-    };
-    
-    checkSession();
-    
-    // Set up auth state change listener
+    // Set up auth state change listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (session) {
@@ -79,6 +47,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
     
+    // Then check for active session
+    const checkSession = async () => {
+      setLoading(true);
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        // Get user details from database
+        const { data: userData } = await supabase
+          .from('users')
+          .select('id, email, role')
+          .eq('id', session.user.id)
+          .single();
+          
+        if (userData) {
+          setUser(userData);
+          setIsAdmin(userData.role === 'admin');
+        }
+      }
+      
+      setLoading(false);
+    };
+    
+    checkSession();
+    
     return () => {
       subscription?.unsubscribe();
     };
@@ -86,12 +79,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   const signIn = async (email: string, password: string) => {
     try {
+      console.log('Attempting to sign in with:', email);
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      console.log('Sign in response:', data, error);
       if (error) {
+        console.error('Login error:', error);
         return { error };
       }
       return { error: null };
     } catch (error) {
+      console.error('Unexpected error during login:', error);
       return { error };
     }
   };
